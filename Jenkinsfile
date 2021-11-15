@@ -3,6 +3,10 @@ pipeline {
     environment {
         registry = "482838254892.dkr.ecr.us-east-2.amazonaws.com/django"
     }
+    stage('Initialize'){
+        def dockerHome = tool 'dockerImage'
+        env.PATH = "${dockerHome}/bin:${env.PATH}"
+    }
     stages {
         stage('start') {
             steps {
