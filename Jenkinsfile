@@ -20,13 +20,13 @@ pipeline {
             }
         }
         
-//         stage('Cloning Git') {
-//             steps {
-//                 script {
-//                    sh 'git clone https://github.com/Kaburumwenda/django.git'
-//                 }
-//             }
-//         }
+        stage('Cloning Git') {
+            steps {
+                script {
+                   sh 'git clone https://github.com/Kaburumwenda/django.git'
+                }
+            }
+        }
   
     // Building Docker images
     stage('Building image') {
