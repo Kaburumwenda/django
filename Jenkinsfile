@@ -1,31 +1,51 @@
 pipeline {
     agent any
     environment {
+        AWS_ACCOUNT_ID="482838254892"
+        AWS_DEFAULT_REGION="us-east-2" 
+        IMAGE_REPO_NAME="django"
+        IMAGE_TAG="latest"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
         registry = "482838254892.dkr.ecr.us-east-2.amazonaws.com/django"
     }
+   
     stages {
-        stage('start') {
+        
+         stage('Logging into AWS ECR') {
             steps {
-                echo 'start Building..'
-                echo 'application buld start successfully'
-            }
-        }
-        stage('docker build') {
-            steps {
-                echo 'building..'
                 script {
-                  dockerImage = docker.build registry
+                sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
                 }
+                 
             }
         }
-        stage('push to Amazon ECR') {
+        
+        stage('Cloning Git') {
             steps {
-                script{
-                    sh 'aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 482838254892.dkr.ecr.us-east-2.amazonaws.com'
-                    sh 'docker tag django:latest 482838254892.dkr.ecr.us-east-2.amazonaws.com/django:latest'
-                    sh 'docker push 482838254892.dkr.ecr.us-east-2.amazonaws.com/django:latest'
+                script {
+                   sh 'git clone https://github.com/Kaburumwenda/django.git'
                 }
             }
         }
+  
+    // Building Docker images
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build "${IMAGE_REPO_NAME}:${IMAGE_TAG}"
+//         dockerImage = docker.build registry
+        }
+      }
+    }
+   
+    // Uploading Docker images into AWS ECR
+    stage('Pushing to ECR') {
+     steps{  
+         script {
+                sh "docker tag ${IMAGE_REPO_NAME}:${IMAGE_TAG} ${REPOSITORY_URI}:$IMAGE_TAG"
+                sh "docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${IMAGE_TAG}"
+         }
+        }
+      }
     }
 }
